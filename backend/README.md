@@ -1,42 +1,118 @@
-
 # Digital Library — Sprint 1 Backend
 
-This folder contains the backend foundation for Sprint 1, including authentication, user roles, resource registration and listing, PDF/EPUB validation, SHA-256 duplicate detection, basic access control, Django Admin, OpenAPI documentation, database migrations, and tests.
+Backend foundation for a web-based digital library. This project is being
+developed incrementally across multiple sprints.
+
+## Sprint 1 Features
+
+- User registration and JWT authentication
+- User roles: Super Admin, Librarian, and Registered User
+- Current-user API endpoint
+- Author and category management
+- Digital resource registration and listing
+- PDF and EPUB file validation
+- SHA-256-based duplicate file detection
+- Basic resource access control
+- Django Admin
+- OpenAPI schema and Swagger UI
+- PostgreSQL database and Django migrations
+- Automated tests for selected Sprint 1 workflows
+
+## Technology Stack
+
+- Python
+- Django
+- Django REST Framework
+- PostgreSQL
+- Docker Compose
+- Simple JWT
+- drf-spectacular
+- pytest and pytest-django
 
 ## Requirements
 
 - Python 3.12 or newer
-- PostgreSQL 19 (or a compatible supported version)
 - Git
+- Docker Desktop with WSL2 integration (recommended)
+- Docker Compose
+
+A local PostgreSQL installation can also be used instead of Docker.
+
+## Setup on Ubuntu / WSL2
+
+Run the following commands from the repository root:
+
+```bash
+cd backend
+```
+
+Create and activate a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Create the environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and configure the Django secret key and database credentials.
+
+Do not commit `.env` to Git.
 
 ## Setup on Windows (PowerShell)
 
-From the repository root:
+Run the following commands from the repository root:
 
 ```powershell
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Edit `.env` and configure the PostgreSQL connection settings.
+Edit `.env` and configure the Django secret key and database credentials.
 
-Create a PostgreSQL database named `digital_library` and configure its owner and credentials to match `.env`.
+## PostgreSQL with Docker Compose
 
-Then run:
+Docker Compose is the recommended database setup for local development.
 
-```powershell
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
+The Compose configuration reads database settings from `.env`.
+The default host port is `5433`, mapped to PostgreSQL's container port `5432`.
+
+Start the database from the `backend` directory:
+
+```bash
+docker compose up -d db
 ```
-## Optional: Docker PostgreSQL
 
-The project uses PostgreSQL through Docker Compose.
+Check the container:
 
-Configure `.env` with the following settings:
+```bash
+docker compose ps
+```
+
+To inspect the resolved Compose configuration:
+
+```bash
+docker compose config
+```
+
+Make sure the database settings in `.env` match the Compose configuration.
+
+Example local development settings:
 
 ```env
 POSTGRES_HOST=127.0.0.1
@@ -46,31 +122,47 @@ POSTGRES_USER=library
 POSTGRES_PASSWORD=library
 ```
 
-Start the database container:
+The example credentials are for local development only. Use strong credentials
+and secure secret management outside local development.
 
-```powershell
-docker compose up -d db
-```
+## Database Migrations
 
-Apply database migrations:
+After configuring the environment and starting PostgreSQL, run:
 
-```powershell
+```bash
 python manage.py migrate
 ```
 
-To check the database container:
+Create a Django superuser:
 
-```powershell
-docker compose ps
+```bash
+python manage.py createsuperuser
 ```
 
-## Tests
+## Run the Development Server
 
-```powershell
+```bash
+python manage.py runserver
+```
+
+The development server is available at:
+
+http://127.0.0.1:8000/
+
+## Run Tests
+
+Run the automated test suite from the `backend` directory:
+
+```bash
 python -m pytest -v
 ```
 
+The current Sprint 1 tests cover selected authentication, public resource
+listing, and librarian resource registration workflows.
+
 ## API Documentation
+
+When the development server is running:
 
 - Swagger UI: http://127.0.0.1:8000/api/docs/
 - OpenAPI schema: http://127.0.0.1:8000/api/schema/
@@ -78,3 +170,18 @@ python -m pytest -v
 ## Django Admin
 
 http://127.0.0.1:8000/admin/
+
+Sign in using the superuser account created with `createsuperuser`.
+
+## Current Sprint 1 Limitations
+
+The following capabilities are not yet fully implemented:
+
+- Subscription lifecycle and subscription-based access
+- Advanced group-specific and confidential permission management
+- Complete resource publishing and archival workflows
+- Secure online reading and file downloading
+- File replacement and complete resource version management
+- Advanced search, filtering, and pagination
+
+These capabilities are planned for subsequent development sprints.
