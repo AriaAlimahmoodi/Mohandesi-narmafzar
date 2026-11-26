@@ -1,13 +1,16 @@
-from rest_framework import generics, permissions
+from pathlib import Path
 
-from .models import Author, Category, Resource
+from django.http import FileResponse, Http404
+from rest_framework import generics, permissions
+from rest_framework.views import APIView
+
+from .models import Author, Category, Resource, ResourceFile
 from .permissions import ResourceAccessPermission
 from .serializers import (
     AuthorSerializer,
     CategorySerializer,
     ResourceSerializer,
 )
-
 
 def get_accessible_resources(user):
     queryset = (
@@ -72,3 +75,44 @@ class ResourceDetailView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         return get_accessible_resources(self.request.user)
+class ResourceFileDownloadView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, resource_id, file_id):
+        resource = get_accessible_resources(request.user).filter(
+            pk=resource_id
+        ).first()
+
+        if resource is None:
+            raise Http404
+
+        resource_file = ResourceFile.objects.filter(
+            pk=file_id,
+            resource=resource,
+            is_active=True,
+        ).first()
+
+        if resource_file is None:
+            raise Http404
+
+        try:
+            file_handle = resource_file.file.open("rb")
+        except (OSError, ValueError):
+            raise Http404
+
+        filename = Path(resource_file.file.name).name
+
+        content_types = {
+            ResourceFile.FileType.PDF: "application/pdf",
+            ResourceFile.FileType.EPUB: "application/epub+zip",
+        }
+
+        return FileResponse(
+            file_handle,
+            as_attachment=True,
+            filename=filename,
+            content_type=content_types.get(
+                resource_file.file_type,
+                "application/octet-stream",
+            ),
+        )
