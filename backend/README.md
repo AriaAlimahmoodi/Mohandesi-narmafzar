@@ -124,7 +124,142 @@ POSTGRES_PASSWORD=library
 
 The example credentials are for local development only. Use strong credentials
 and secure secret management outside local development.
+# اجرای پروژه با Docker
 
+## ۱. پیش‌نیازها
+
+برای اجرای پروژه به موارد زیر نیاز است:
+
+- Docker Desktop
+- فعال بودن موتور Docker با پشتیبانی WSL2
+- Git
+- دسترسی به ترمینال Ubuntu یا WSL
+
+## ۲. دریافت پروژه
+
+```bash
+git clone https://github.com/AriaAlimahmoodi/Mohandesi-narmafraz.git
+cd Mohandesi-narmafraz/backend
+```
+
+## ۳. تنظیم متغیرهای محیطی
+
+فایل نمونه تنظیمات را کپی کنید:
+
+```bash
+cp .env.example .env
+```
+
+مقادیر فایل `.env` را متناسب با محیط خود تنظیم کنید:
+
+```env
+DJANGO_DEBUG=True
+DJANGO_SECRET_KEY=your-secret-key
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+POSTGRES_DB=digital_library
+POSTGRES_USER=library
+POSTGRES_PASSWORD=your-database-password
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5433
+```
+
+**نکته امنیتی:** فایل `.env` شامل اطلاعات محرمانه است و نباید در Git ثبت شود. برای محیط واقعی نیز باید از Secret Key و رمز عبور امن استفاده شود.
+
+## ۴. ساخت و اجرای سرویس‌ها
+
+از پوشه `backend` اجرا کنید:
+
+```bash
+docker compose up --build -d
+```
+
+این دستور تصویر Django را می‌سازد و سرویس‌های زیر را اجرا می‌کند:
+
+- `web`: برنامه Django و API
+- `db`: پایگاه داده PostgreSQL
+
+سرویس Django پس از سالم شدن سرویس PostgreSQL اجرا می‌شود.
+
+## ۵. بررسی وضعیت سرویس‌ها
+
+```bash
+docker compose ps
+```
+
+برای مشاهده گزارش Django:
+
+```bash
+docker compose logs --tail=50 web
+```
+
+برای مشاهده گزارش PostgreSQL:
+
+```bash
+docker compose logs --tail=50 db
+```
+
+## ۶. اجرای Migrationها
+
+```bash
+docker compose exec web python manage.py migrate
+```
+
+## ۷. ساخت حساب مدیر
+
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+مراحل وارد کردن نام کاربری، ایمیل و رمز عبور را تکمیل کنید.
+
+## ۸. دسترسی به سامانه
+
+پس از اجرای موفق سرویس‌ها:
+
+- مستندات API و Swagger: http://127.0.0.1:8000/api/docs/
+- پنل مدیریت Django: http://127.0.0.1:8000/admin/
+
+## ۹. اجرای تست‌ها
+
+```bash
+docker compose exec web pytest -q
+```
+
+برای بررسی تنظیمات Django:
+
+```bash
+docker compose exec web python manage.py check
+```
+
+## ۱۰. توقف سرویس‌ها
+
+برای متوقف کردن سرویس‌ها بدون حذف داده‌های پایگاه داده:
+
+```bash
+docker compose stop
+```
+
+برای اجرای مجدد:
+
+```bash
+docker compose start
+```
+
+برای خاموش کردن سرویس‌ها و حذف کانتینرها، بدون حذف Volume دیتابیس:
+
+```bash
+docker compose down
+```
+
+**هشدار:** از `docker compose down -v` استفاده نکنید، مگر اینکه عمداً بخواهید Volume و داده‌های پایگاه داده Docker را حذف کنید.
+
+## ۱۱. نکات توسعه
+
+- فایل‌های بارگذاری‌شده در پوشه `backend/media` نگهداری می‌شوند.
+- داده‌های PostgreSQL در Docker Volume ذخیره می‌شوند.
+- تغییرات کد و تنظیمات باید با تست‌های خودکار بررسی شوند.
+- فایل `.env`، رمزها و کلیدهای محرمانه نباید به مخزن Git ارسال شوند.
+- دستور اجرای فعلی Django از `runserver` استفاده می‌کند و برای توسعه و نمایش محلی است؛ برای استقرار Production باید سرور مناسب و تنظیمات امنیتی Production پیکربندی شوند.
 ## Database Migrations
 
 After configuring the environment and starting PostgreSQL, run:
