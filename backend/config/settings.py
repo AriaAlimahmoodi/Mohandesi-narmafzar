@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "apps.identity",
     "apps.resources",
     "apps.document_processing",
+    "apps.favorites",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware", "django.contrib.sessions.middleware.SessionMiddleware",

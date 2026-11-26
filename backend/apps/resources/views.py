@@ -3,6 +3,7 @@ from pathlib import Path
 from django.http import FileResponse, Http404
 from rest_framework import generics, permissions
 from rest_framework.views import APIView
+from .services import get_accessible_resources
 
 from .models import Author, Category, Resource, ResourceFile
 from .permissions import ResourceAccessPermission
@@ -11,31 +12,6 @@ from .serializers import (
     CategorySerializer,
     ResourceSerializer,
 )
-
-def get_accessible_resources(user):
-    queryset = (
-        Resource.objects
-        .prefetch_related("authors", "files")
-        .select_related("category", "created_by")
-    )
-
-    if user.is_authenticated and user.is_librarian():
-        return queryset
-
-    queryset = queryset.filter(status=Resource.Status.PUBLISHED)
-
-    if user.is_authenticated:
-        return queryset.filter(
-            access_policy__in=[
-                Resource.AccessPolicy.PUBLIC,
-                Resource.AccessPolicy.REGISTERED_ONLY,
-            ]
-        )
-
-    return queryset.filter(
-        access_policy=Resource.AccessPolicy.PUBLIC
-    )
-
 
 class AuthorListCreateView(generics.ListCreateAPIView):
     queryset = Author.objects.all().order_by("name")
