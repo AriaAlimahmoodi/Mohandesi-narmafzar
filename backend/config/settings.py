@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "apps.resources",
     "apps.document_processing",
     "apps.favorites",
+    "apps.subscriptions",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware", "django.contrib.sessions.middleware.SessionMiddleware",
