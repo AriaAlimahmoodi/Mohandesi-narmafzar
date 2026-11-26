@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from django.http import FileResponse, Http404
+from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
 from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from .services import get_accessible_resources
@@ -45,15 +47,24 @@ class ResourceListCreateView(generics.ListCreateAPIView):
         return get_accessible_resources(self.request.user)
 
 
+
 class ResourceDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = ResourceSerializer
     permission_classes = [ResourceAccessPermission]
 
     def get_queryset(self):
         return get_accessible_resources(self.request.user)
+
+
 class ResourceFileDownloadView(APIView):
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        responses={
+            200: OpenApiTypes.BINARY,
+        },
+        description="Download an accessible resource file.",
+    )
     def get(self, request, resource_id, file_id):
         resource = get_accessible_resources(request.user).filter(
             pk=resource_id
