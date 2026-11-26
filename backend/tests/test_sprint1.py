@@ -2,6 +2,14 @@ import io, pytest
 from rest_framework.test import APIClient
 from apps.identity.models import User
 from apps.resources.models import Resource
+from types import SimpleNamespace
+
+from rest_framework.exceptions import ValidationError
+
+from apps.resources.validators import (
+    MAX_RESOURCE_FILE_SIZE,
+    validate_resource_file,
+)
 @pytest.mark.django_db
 def test_register_and_login():
     c=APIClient(); r=c.post("/api/v1/auth/register/",{"username":"aria","password":"strong-pass-123"},format="json"); assert r.status_code==201
@@ -67,3 +75,91 @@ def test_public_file_download_requires_published_resource():
     assert response.status_code == 200
     assert response["Content-Type"] == "application/pdf"
     assert b"".join(response.streaming_content) == b"%PDF-1.7\nminimal test pdf"
+@pytest.mark.django_db
+def test_invalid_file_extension_is_rejected():
+    user = User.objects.create_user(
+        username="invalid_extension_user",
+        password="strong-pass-123",
+        role=User.Role.LIBRARIAN,
+    )
+
+    client = APIClient()
+    client.force_authenticate(user)
+
+    file = io.BytesIO(b"not a supported document")
+    file.name = "program.exe"
+
+    response = client.post(
+        "/api/v1/resources/",
+        {"title": "Invalid Extension", "file": file},
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_invalid_pdf_content_is_rejected():
+    user = User.objects.create_user(
+        username="invalid_pdf_user",
+        password="strong-pass-123",
+        role=User.Role.LIBRARIAN,
+    )
+
+    client = APIClient()
+    client.force_authenticate(user)
+
+    file = io.BytesIO(b"This is not a PDF file")
+    file.name = "invalid.pdf"
+
+    response = client.post(
+        "/api/v1/resources/",
+        {"title": "Invalid PDF", "file": file},
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+
+
+def test_file_larger_than_limit_is_rejected():
+    oversized_file = SimpleNamespace(
+        name="large.pdf",
+        size=MAX_RESOURCE_FILE_SIZE + 1,
+    )
+
+    with pytest.raises(ValidationError):
+        validate_resource_file(oversized_file)
+
+
+@pytest.mark.django_db
+def test_duplicate_file_content_is_rejected():
+    user = User.objects.create_user(
+        username="duplicate_user",
+        password="strong-pass-123",
+        role=User.Role.LIBRARIAN,
+    )
+
+    client = APIClient()
+    client.force_authenticate(user)
+
+    first_file = io.BytesIO(b"%PDF-1.7\nsame document content")
+    first_file.name = "first.pdf"
+
+    first_response = client.post(
+        "/api/v1/resources/",
+        {"title": "First Book", "file": first_file},
+        format="multipart",
+    )
+
+    assert first_response.status_code == 201
+
+    second_file = io.BytesIO(b"%PDF-1.7\nsame document content")
+    second_file.name = "second.pdf"
+
+    second_response = client.post(
+        "/api/v1/resources/",
+        {"title": "Second Book", "file": second_file},
+        format="multipart",
+    )
+
+    assert second_response.status_code == 400
