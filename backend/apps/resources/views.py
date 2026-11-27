@@ -6,6 +6,8 @@ from drf_spectacular.types import OpenApiTypes
 from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from .services import get_accessible_resources
+from apps.access_control.models import AccessGrant
+from apps.access_control.services.permissions import can_access_resource
 
 from .models import Author, Category, Resource, ResourceFile
 from .permissions import ResourceAccessPermission
@@ -66,11 +68,16 @@ class ResourceFileDownloadView(APIView):
         description="Download an accessible resource file.",
     )
     def get(self, request, resource_id, file_id):
-        resource = get_accessible_resources(request.user).filter(
-            pk=resource_id
-        ).first()
+        resource = Resource.objects.filter(pk=resource_id).first()
 
         if resource is None:
+            raise Http404
+
+        if not can_access_resource(
+            request.user,
+            resource,
+            AccessGrant.Operation.DOWNLOAD,
+        ):
             raise Http404
 
         resource_file = ResourceFile.objects.filter(

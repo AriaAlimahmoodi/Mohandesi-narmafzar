@@ -7,6 +7,15 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-local-secret")
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [x.strip() for x in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if x.strip()]
+OLLAMA_BASE_URL = os.getenv(
+    "OLLAMA_BASE_URL",
+    "http://host.docker.internal:11434",
+)
+
+OLLAMA_CHAT_MODEL = os.getenv("OLLAMA_CHAT_MODEL", "qwen3:4b")
+OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "bge-m3")
+
+QDRANT_URL = os.getenv("QDRANT_URL", "http://qdrant:6333")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -26,6 +35,8 @@ INSTALLED_APPS = [
     "apps.favorites",
     "apps.subscriptions",
     "apps.payments",
+    "apps.ai_search",
+    "apps.access_control",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware", "django.contrib.sessions.middleware.SessionMiddleware",
